@@ -11,10 +11,10 @@ import { User } from './users/user.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'tu_password',
+      password: 'admin',
       database: 'mova',
       entities: [User],
-      synchronize: true, // ⚠️ solo en desarrollo
+      synchronize: true, 
     }),
 
     UsersModule,
