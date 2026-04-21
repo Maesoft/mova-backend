@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { User } from './users/user.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ExercisesModule } from './exercises/exercises.module';
+import { RoutinesModule } from './routines/routines.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -20,7 +22,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
-        entities: [User],
         synchronize: true,
         autoLoadEntities: true,
       }),
@@ -28,6 +29,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
     UsersModule,
     AuthModule,
+    ExercisesModule,
+    RoutinesModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}
