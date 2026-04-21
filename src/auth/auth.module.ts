@@ -5,13 +5,23 @@ import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { LocalStrategy } from './strategies/local.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { PassportModule } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
+import { StringValue } from 'ms';
 
 @Module({
   imports: [
     UsersModule,
-    JwtModule.register({
-      secret: 'secretKey',
-      signOptions: { expiresIn: '1d' },
+    PassportModule,
+
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET')!,
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES', '15d') as StringValue,
+        },
+      }),
     }),
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy],

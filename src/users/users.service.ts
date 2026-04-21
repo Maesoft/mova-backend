@@ -12,20 +12,20 @@ export class UsersService {
   ) {}
 
   // ✅ Crear usuario (register)
- async create(data: Partial<User>): Promise<User> {
-  if (!data.email) {
-    throw new BadRequestException('El email es requerido');
+  async create(data: Partial<User>): Promise<User> {
+    if (!data.email) {
+      throw new BadRequestException('El email es requerido');
+    }
+
+    const existingUser = await this.findByEmail(data.email);
+
+    if (existingUser) {
+      throw new BadRequestException('El email ya está registrado');
+    }
+    data.email = data.email.toLowerCase();
+    const user = this.userRepository.create(data);
+    return this.userRepository.save(user);
   }
-
-  const existingUser = await this.findByEmail(data.email);
-
-  if (existingUser) {
-    throw new BadRequestException('El email ya está registrado');
-  }
-
-  const user = this.userRepository.create(data);
-  return this.userRepository.save(user);
-}
 
   // ✅ Buscar por email (login)
   async findByEmail(email: string): Promise<User | null> {
