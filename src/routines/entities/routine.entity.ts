@@ -4,11 +4,10 @@ import {
   Column,
   OneToMany,
   ManyToOne,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
 import { RoutineBlock } from './routine-block.entity';
 import { User } from '../../users/user.entity';
+import { UserRoutine } from './user-routine.entity';
 
 @Entity()
 export class Routine {
@@ -27,10 +26,9 @@ export class Routine {
   })
   trainer!: User;
 
-  // 👥 Usuarios asignados
-  @ManyToMany(() => User, (user) => user.assignedRoutines)
-  @JoinTable()
-  assignedTo!: User[];
+  // 🔥 Relación real con usuarios (con estado)
+  @OneToMany(() => UserRoutine, (ur) => ur.routine)
+  userRoutines!: UserRoutine[];
 
   @OneToMany(() => RoutineBlock, (block) => block.routine, {
     cascade: true,

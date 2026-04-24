@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, IsNumber, Min } from 'class-validator';
 
 export class CreateRoutineBlockExerciseDto {
   @IsInt()
@@ -15,6 +15,10 @@ export class CreateRoutineBlockExerciseDto {
   @IsOptional()
   @IsInt()
   restSeconds?: number;
+
+  @IsOptional()
+  @IsNumber()
+  weight?: number;
 
   @IsInt()
   @Min(1)

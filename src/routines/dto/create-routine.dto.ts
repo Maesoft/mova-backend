@@ -17,9 +17,6 @@ export class CreateRoutineDto {
   @IsString()
   description?: string;
 
-  @IsString()
-  level!: string;
-
   @IsInt()
   trainerId!: number;
 

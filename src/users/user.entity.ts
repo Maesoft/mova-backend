@@ -1,11 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  ManyToMany,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Routine } from '../routines/entities/routine.entity';
+import { UserRoutine } from '../routines/entities/user-routine.entity';
 
 @Entity('users')
 export class User {
@@ -31,7 +26,7 @@ export class User {
   @OneToMany(() => Routine, (routine) => routine.trainer)
   createdRoutines!: Routine[];
 
-  // 🧍 Rutinas asignadas a este usuario
-  @ManyToMany(() => Routine, (routine) => routine.assignedTo)
-  assignedRoutines!: Routine[];
+  // 🧍 Relación con rutinas (con estado, progreso, etc)
+  @OneToMany(() => UserRoutine, (ur) => ur.user)
+  userRoutines!: UserRoutine[];
 }
