@@ -8,6 +8,7 @@ import { RoutineBlockExercise } from './entities/routine-block-exercise.entity';
 import { RoutinesService } from './routines.service';
 import { RoutinesController } from './routines.controller';
 import { User } from '../users/user.entity';
+import { UserRoutine } from './entities/user-routine.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { User } from '../users/user.entity';
       RoutineBlock,
       RoutineBlockExercise,
       User,
+      UserRoutine,
     ]),
   ],
   controllers: [RoutinesController],

@@ -1,28 +1,34 @@
-import { Controller, Post, Body, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards } from '@nestjs/common';
 import { RoutinesService } from './routines.service';
 import { CreateRoutineDto } from './dto/create-routine.dto';
-import { AssignUsersDto } from './dto/assign-user-routine.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles/roles.guard';
+import { Roles } from '../auth/roles/roles.decorator';
+import { CurrentUser } from '../auth/roles/current-user.decorator';
+import { AuthUser } from '../auth/interfaces/auth-user.interface';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('routines')
 export class RoutinesController {
   constructor(private readonly routinesService: RoutinesService) {}
 
+  // 👨‍🏫 SOLO TRAINER
   @Post()
+  @Roles('trainer')
   create(@Body() dto: CreateRoutineDto) {
     return this.routinesService.create(dto);
   }
 
+  // 👨‍🏫 SOLO TRAINER
   @Get(':id')
+  @Roles('trainer')
   findOne(@Param('id') id: string) {
     return this.routinesService.findOne(+id);
   }
 
-  @Patch(':id/assign-users')
-  assignUsers(@Param('id') id: string, @Body() dto: AssignUsersDto) {
-    return this.routinesService.assignUsers(+id, dto.assignedToIds);
-  }
-
+  // 👨‍🏫 SOLO TRAINER
   @Post(':userId/active-routine/:routineId')
+  @Roles('trainer')
   setActive(
     @Param('userId') userId: string,
     @Param('routineId') routineId: string,
@@ -30,18 +36,24 @@ export class RoutinesController {
     return this.routinesService.setActiveRoutine(+userId, +routineId);
   }
 
-  @Get(':userId/active-routine')
-  getActive(@Param('userId') userId: string) {
-    return this.routinesService.getActiveRoutine(+userId);
+  // 🧍 USUARIO (su propia rutina) + trainer opcional
+  @Get('me/active')
+  @Roles('user', 'trainer')
+  getActive(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getActiveRoutine(user.id);
   }
 
-  @Get(':userId/today')
-  getToday(@Param('userId') userId: string) {
-    return this.routinesService.getTodayRoutine(+userId);
+  // 🧍 USUARIO
+  @Get('me/today')
+  @Roles('user', 'trainer')
+  getToday(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getTodayRoutine(user.id);
   }
 
-  @Post(':userId/complete-day')
-  completeDay(@Param('userId') userId: string) {
-    return this.routinesService.completeDay(+userId);
+  // 🧍 USUARIO
+  @Post('me/complete-day')
+  @Roles('user', 'trainer')
+  completeDay(@CurrentUser() user: AuthUser) {
+    return this.routinesService.completeDay(user.id);
   }
 }

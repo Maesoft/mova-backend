@@ -4,7 +4,6 @@ import {
   IsOptional,
   ValidateNested,
   ArrayMinSize,
-  IsArray,
   IsInt,
 } from 'class-validator';
 import { CreateRoutineBlockDto } from './create-routine-block.dto';
@@ -19,10 +18,6 @@ export class CreateRoutineDto {
 
   @IsInt()
   trainerId!: number;
-
-  @IsArray()
-  @IsInt({ each: true })
-  assignedToIds!: number[];
 
   @ValidateNested({ each: true })
   @Type(() => CreateRoutineBlockDto)

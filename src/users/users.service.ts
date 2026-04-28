@@ -58,7 +58,6 @@ export class UsersService {
 
     return this.userRepository.save(user);
   }
-
   // ✅ Eliminar usuario
   async delete(id: number) {
     const user = await this.findById(id);

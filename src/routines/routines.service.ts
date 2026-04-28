@@ -4,12 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Routine } from './entities/routine.entity';
 import { User } from '../users/user.entity';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UserRoutine } from './entities/user-routine.entity';
+import { RoutineBlockExercise } from './entities/routine-block-exercise.entity';
 
 @Injectable()
 export class RoutinesService {
@@ -29,18 +30,14 @@ export class RoutinesService {
       where: { id: dto.trainerId },
     });
 
-    if (!trainer) throw new NotFoundException('Trainer not found');
-
-    const assignedUsers = await this.userRepository.find({
-      where: { id: In(dto.assignedToIds) },
-    });
+    if (!trainer) {
+      throw new NotFoundException('Trainer not found');
+    }
 
     const routine = this.routineRepository.create({
       name: dto.name,
       description: dto.description,
       trainer,
-      assignedTo: assignedUsers,
-
       blocks: dto.blocks.map((block) => ({
         day: block.day,
         order: block.order,
@@ -62,7 +59,6 @@ export class RoutinesService {
       where: { id },
       relations: [
         'trainer',
-        'assignedTo',
         'blocks',
         'blocks.exercises',
         'blocks.exercises.exercise',
@@ -73,25 +69,35 @@ export class RoutinesService {
 
     return this.groupByDay(routine);
   }
-  async assignUsers(routineId: number, userIds: number[]) {
-    const routine = await this.routineRepository.findOne({
-      where: { id: routineId },
-      relations: ['assignedTo'],
-    });
+  async assignRoutineToUser(userId: number, routineId: number) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) throw new NotFoundException('User not found');
 
+    const routine = await this.routineRepository.findOneBy({ id: routineId });
     if (!routine) throw new NotFoundException('Routine not found');
 
-    const users = await this.userRepository.findBy({
-      id: In(userIds),
+    // evitar duplicado
+    const existing = await this.userRoutineRepository.findOne({
+      where: {
+        user: { id: userId },
+        routine: { id: routineId },
+      },
     });
 
-    const existingIds = routine.assignedTo.map((u) => u.id);
+    if (existing) {
+      throw new BadRequestException(
+        'La rutina ya está asignada a este usuario',
+      );
+    }
 
-    const newUsers = users.filter((u) => !existingIds.includes(u.id));
+    const userRoutine = this.userRoutineRepository.create({
+      user,
+      routine,
+      currentDay: 1, // 🔥 importante
+      isActive: false,
+    });
 
-    routine.assignedTo = [...routine.assignedTo, ...newUsers];
-
-    return this.routineRepository.save(routine);
+    return this.userRoutineRepository.save(userRoutine);
   }
   async setActiveRoutine(userId: number, routineId: number) {
     const user = await this.userRepository.findOneBy({ id: userId });
@@ -214,6 +220,9 @@ export class RoutinesService {
       (a, b) => a - b,
     );
 
+    if (uniqueDays.length === 0) {
+      throw new BadRequestException('La rutina no tiene días definidos');
+    }
     const totalDays = uniqueDays.length;
 
     const currentIndex = uniqueDays.indexOf(userRoutine.currentDay);
@@ -231,7 +240,7 @@ export class RoutinesService {
       blocks: {
         id: number;
         order: number;
-        exercises: any[];
+        exercises: RoutineBlockExercise[];
       }[];
     };
 
@@ -268,7 +277,6 @@ export class RoutinesService {
       name: routine.name,
       description: routine.description,
       trainer: routine.trainer,
-      assignedTo: routine.assignedTo,
       days,
     };
   }
