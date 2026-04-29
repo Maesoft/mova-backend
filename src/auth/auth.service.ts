@@ -24,6 +24,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       role: user.role,
+      isActive: user.isActive,
     });
   }
 
@@ -36,10 +37,13 @@ export class AuthService {
 
     if (!isMatch) throw new UnauthorizedException('Credenciales inválidas');
 
+    if (!user.isActive) throw new UnauthorizedException('Cuenta desactivada');
+
     return {
       id: user.id,
       email: user.email,
       role: user.role,
+      isActive: user.isActive,
     };
   }
 
@@ -52,10 +56,12 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      isActive: user.isActive,
     };
 
     return {
       access_token: this.jwtService.sign(payload),
+      user,
     };
   }
 }
