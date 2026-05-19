@@ -2,8 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Routine } from './entities/routine.entity';
+import { RoutineDay } from './entities/routine-day.entity';
 import { RoutineBlock } from './entities/routine-block.entity';
-import { RoutineBlockExercise } from './entities/routine-block-exercise.entity';
+import { RoutineExercise } from './entities/routine-exercise.entity';
 
 import { RoutinesService } from './routines.service';
 import { RoutinesController } from './routines.controller';
@@ -14,8 +15,9 @@ import { UserRoutine } from './entities/user-routine.entity';
   imports: [
     TypeOrmModule.forFeature([
       Routine,
+      RoutineDay,
       RoutineBlock,
-      RoutineBlockExercise,
+      RoutineExercise,
       User,
       UserRoutine,
     ]),

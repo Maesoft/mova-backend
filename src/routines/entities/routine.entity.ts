@@ -5,9 +5,8 @@ import {
   OneToMany,
   ManyToOne,
 } from 'typeorm';
-import { RoutineBlock } from './routine-block.entity';
+import { RoutineDay } from './routine-day.entity';
 import { User } from '../../users/user.entity';
-import { UserRoutine } from './user-routine.entity';
 
 @Entity()
 export class Routine {
@@ -17,21 +16,14 @@ export class Routine {
   @Column()
   name!: string;
 
-  @Column({ nullable: true })
-  description?: string;
-
-  // 👨‍🏫 Entrenador que la crea
   @ManyToOne(() => User, (user) => user.createdRoutines, {
-    eager: true,
+    onDelete: 'CASCADE',
   })
   trainer!: User;
 
-  // 🔥 Relación real con usuarios (con estado)
-  @OneToMany(() => UserRoutine, (ur) => ur.routine)
-  userRoutines!: UserRoutine[];
-
-  @OneToMany(() => RoutineBlock, (block) => block.routine, {
+  @OneToMany(() => RoutineDay, (day) => day.routine, {
     cascade: true,
+    eager: true,
   })
-  blocks!: RoutineBlock[];
+  days!: RoutineDay[];
 }

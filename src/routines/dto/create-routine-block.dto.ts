@@ -1,18 +1,16 @@
 import { Type } from 'class-transformer';
-import { IsInt, Min, ValidateNested, ArrayMinSize } from 'class-validator';
-import { CreateRoutineBlockExerciseDto } from './create-routine-block-exercise.dto';
+import { IsString, IsInt, ValidateNested, ArrayMinSize } from 'class-validator';
+import { CreateRoutineExerciseDto } from './create-routine-exercise.dto';
 
 export class CreateRoutineBlockDto {
-  @IsInt()
-  @Min(1)
-  day!: number;
+  @IsString()
+  name!: string;
 
   @IsInt()
-  @Min(1)
   order!: number;
 
   @ValidateNested({ each: true })
-  @Type(() => CreateRoutineBlockExerciseDto)
+  @Type(() => CreateRoutineExerciseDto)
   @ArrayMinSize(1)
-  exercises!: CreateRoutineBlockExerciseDto[];
+  exercises!: CreateRoutineExerciseDto[];
 }

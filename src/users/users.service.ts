@@ -9,7 +9,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-  ) {}
+  ) { }
 
   // ✅ Crear usuario (register)
   async create(data: Partial<User>): Promise<User> {
@@ -42,8 +42,26 @@ export class UsersService {
   }
 
   // ✅ Obtener todos (admin dashboard)
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAll() {
+    const users = await this.userRepository.find({
+      relations: {
+        userRoutines: {
+          routine: true,
+        },
+      },
+    });
+
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      isActive: user.isActive,
+      routine: user.userRoutines?.[0]
+        ? {
+            id: user.userRoutines[0].routine.id,
+            name: user.userRoutines[0].routine.name,
+          }
+        : null,
+    }));
   }
 
   // ✅ Activar / desactivar usuario (gym lógica)

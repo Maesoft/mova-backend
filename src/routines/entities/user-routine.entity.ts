@@ -8,27 +8,31 @@ import {
 import { User } from '../../users/user.entity';
 import { Routine } from './routine.entity';
 
-@Entity()
 @Unique(['user', 'routine'])
+@Entity()
 export class UserRoutine {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.userRoutines, {
+    onDelete: 'CASCADE',
+  })
   user!: User;
 
-  @ManyToOne(() => Routine, { eager: true, onDelete: 'CASCADE' })
+  @ManyToOne(() => Routine, {
+    onDelete: 'CASCADE',
+  })
   routine!: Routine;
-
-  @Column({ default: false })
-  isActive!: boolean;
-
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  assignedAt!: Date;
 
   @Column({ default: 1 })
   currentDay!: number;
 
+  @Column({ default: false })
+  completed!: boolean;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  startedAt!: Date;
+
   @Column({ type: 'timestamp', nullable: true })
-  lastCompletedAt?: Date;
+  completedAt!: Date | null;
 }

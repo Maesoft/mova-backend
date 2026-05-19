@@ -12,48 +12,61 @@ import { AuthUser } from '../auth/interfaces/auth-user.interface';
 export class RoutinesController {
   constructor(private readonly routinesService: RoutinesService) {}
 
-  // 👨‍🏫 SOLO TRAINER
+  // 👨‍🏫 CREAR RUTINA
   @Post()
   @Roles('trainer')
   create(@Body() dto: CreateRoutineDto) {
     return this.routinesService.create(dto);
   }
 
-  // 👨‍🏫 SOLO TRAINER
+  // 👨‍🏫 LISTAR TODAS LAS RUTINAS
+  @Get()
+  @Roles('trainer')
+  findAll() {
+    return this.routinesService.findAll();
+  }
+
+  // 👨‍🏫 OBTENER UNA RUTINA
   @Get(':id')
   @Roles('trainer')
   findOne(@Param('id') id: string) {
     return this.routinesService.findOne(+id);
   }
 
-  // 👨‍🏫 SOLO TRAINER
-  @Post(':userId/active-routine/:routineId')
+  // 👨‍🏫 ASIGNAR RUTINA A USUARIO
+  @Post(':userId/assign/:routineId')
   @Roles('trainer')
-  setActive(
+  assignRoutine(
     @Param('userId') userId: string,
     @Param('routineId') routineId: string,
   ) {
-    return this.routinesService.setActiveRoutine(+userId, +routineId);
+    return this.routinesService.assignRoutineToUser(+userId, +routineId);
   }
 
-  // 🧍 USUARIO (su propia rutina) + trainer opcional
-  @Get('me/active')
+  // 🧍 USUARIO → VER SU RUTINA ACTUAL
+  @Get('me')
   @Roles('user', 'trainer')
-  getActive(@CurrentUser() user: AuthUser) {
-    return this.routinesService.getActiveRoutine(user.id);
+  getMyRoutine(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getUserRoutine(user.id);
   }
 
-  // 🧍 USUARIO
+  // 🧍 USUARIO → VER SOLO EL DÍA ACTUAL
   @Get('me/today')
   @Roles('user', 'trainer')
   getToday(@CurrentUser() user: AuthUser) {
     return this.routinesService.getTodayRoutine(user.id);
   }
 
-  // 🧍 USUARIO
+  // 🧍 USUARIO → COMPLETAR DÍA
   @Post('me/complete-day')
   @Roles('user', 'trainer')
   completeDay(@CurrentUser() user: AuthUser) {
     return this.routinesService.completeDay(user.id);
+  }
+
+  @Get('me/progress')
+  @Roles('user', 'trainer')
+  getProgress(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getUserProgress(user.id);
   }
 }

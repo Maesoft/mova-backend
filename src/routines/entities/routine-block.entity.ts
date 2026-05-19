@@ -5,8 +5,8 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { Routine } from './routine.entity';
-import { RoutineBlockExercise } from './routine-block-exercise.entity';
+import { RoutineDay } from './routine-day.entity';
+import { RoutineExercise } from './routine-exercise.entity';
 
 @Entity()
 export class RoutineBlock {
@@ -14,18 +14,19 @@ export class RoutineBlock {
   id!: number;
 
   @Column()
-  order!: number;
+  name!: string;
 
   @Column()
-  day!: number;
+  order!: number;
 
-  @ManyToOne(() => Routine, (routine) => routine.blocks, {
+  @ManyToOne(() => RoutineDay, (day) => day.blocks, {
     onDelete: 'CASCADE',
   })
-  routine!: Routine;
+  day!: RoutineDay;
 
-  @OneToMany(() => RoutineBlockExercise, (ex) => ex.block, {
+  @OneToMany(() => RoutineExercise, (exercise) => exercise.block, {
     cascade: true,
+    eager: true,
   })
-  exercises!: RoutineBlockExercise[];
+  exercises!: RoutineExercise[];
 }

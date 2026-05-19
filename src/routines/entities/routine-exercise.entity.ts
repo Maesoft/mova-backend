@@ -1,9 +1,10 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+
 import { RoutineBlock } from './routine-block.entity';
 import { Exercise } from '../../exercises/exercise.entity';
 
 @Entity()
-export class RoutineBlockExercise {
+export class RoutineExercise {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -13,18 +14,16 @@ export class RoutineBlockExercise {
   block!: RoutineBlock;
 
   @ManyToOne(() => Exercise, {
-    eager: true, // te trae el ejercicio automáticamente
+    eager: true,
+    onDelete: 'CASCADE',
   })
   exercise!: Exercise;
 
-  @Column()
-  sets!: number;
-
-  @Column()
-  reps!: number;
-
-  @Column({ nullable: true })
-  restSeconds?: number;
+  @Column({
+    type: 'text',
+    default: '',
+  })
+  instructions!: string;
 
   @Column()
   order!: number;

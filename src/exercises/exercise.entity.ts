@@ -17,7 +17,8 @@ export class Exercise {
   videoUrl?: string;
 
   @ManyToOne(() => Category, (category) => category.exercises, {
-    eager: true, // 🔥 te trae la categoría automáticamente
+    eager: true,
+    onDelete: 'CASCADE',
   })
   category!: Category;
 }

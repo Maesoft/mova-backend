@@ -10,7 +10,6 @@ import { Routine } from './entities/routine.entity';
 import { User } from '../users/user.entity';
 import { CreateRoutineDto } from './dto/create-routine.dto';
 import { UserRoutine } from './entities/user-routine.entity';
-import { RoutineBlockExercise } from './entities/routine-block-exercise.entity';
 
 @Injectable()
 export class RoutinesService {
@@ -25,6 +24,7 @@ export class RoutinesService {
     private readonly userRoutineRepository: Repository<UserRoutine>,
   ) {}
 
+  // ✅ CREATE
   async create(dto: CreateRoutineDto) {
     const trainer = await this.userRepository.findOne({
       where: { id: dto.trainerId },
@@ -36,39 +36,67 @@ export class RoutinesService {
 
     const routine = this.routineRepository.create({
       name: dto.name,
-      description: dto.description,
       trainer,
-      blocks: dto.blocks.map((block) => ({
-        day: block.day,
-        order: block.order,
-
-        exercises: block.exercises.map((ex) => ({
-          sets: ex.sets,
-          reps: ex.reps,
-          restSeconds: ex.restSeconds,
-          order: ex.order,
-          exercise: { id: ex.exerciseId },
+      days: (dto.days || []).map((day) => ({
+        dayNumber: day.dayNumber,
+        blocks: (day.blocks || []).map((block) => ({
+          name: block.name,
+          order: block.order,
+          exercises: (block.exercises || []).map((ex) => ({
+            instructions: ex.instructions,
+            order: ex.order,
+            exercise: { id: ex.exerciseId },
+          })),
         })),
       })),
     });
 
     return this.routineRepository.save(routine);
   }
+
+  // ✅ FIND ALL
+  async findAll() {
+    return this.routineRepository.find({
+      relations: [
+        'trainer',
+        'days',
+        'days.blocks',
+        'days.blocks.exercises',
+        'days.blocks.exercises.exercise',
+      ],
+      order: {
+        days: {
+          dayNumber: 'ASC',
+          blocks: {
+            order: 'ASC',
+            exercises: {
+              order: 'ASC',
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // ✅ FIND ONE
   async findOne(id: number) {
     const routine = await this.routineRepository.findOne({
       where: { id },
       relations: [
         'trainer',
-        'blocks',
-        'blocks.exercises',
-        'blocks.exercises.exercise',
+        'days',
+        'days.blocks',
+        'days.blocks.exercises',
+        'days.blocks.exercises.exercise',
       ],
     });
 
     if (!routine) throw new NotFoundException('Routine not found');
 
-    return this.groupByDay(routine);
+    return routine;
   }
+
+  // ✅ ASIGNAR RUTINA
   async assignRoutineToUser(userId: number, routineId: number) {
     const user = await this.userRepository.findOneBy({ id: userId });
     if (!user) throw new NotFoundException('User not found');
@@ -76,7 +104,6 @@ export class RoutinesService {
     const routine = await this.routineRepository.findOneBy({ id: routineId });
     if (!routine) throw new NotFoundException('Routine not found');
 
-    // evitar duplicado
     const existing = await this.userRoutineRepository.findOne({
       where: {
         user: { id: userId },
@@ -85,199 +112,101 @@ export class RoutinesService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        'La rutina ya está asignada a este usuario',
-      );
+      throw new BadRequestException('La rutina ya está asignada');
     }
 
     const userRoutine = this.userRoutineRepository.create({
       user,
       routine,
-      currentDay: 1, // 🔥 importante
-      isActive: false,
+      currentDay: 1,
+      completed: false,
     });
 
     return this.userRoutineRepository.save(userRoutine);
   }
-  async setActiveRoutine(userId: number, routineId: number) {
-    const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) throw new NotFoundException('User not found');
 
-    const routine = await this.routineRepository.findOneBy({ id: routineId });
-    if (!routine) throw new NotFoundException('Routine not found');
-
-    // 🔥 desactivar todas las rutinas del usuario
-    await this.userRoutineRepository.update(
-      { user: { id: userId } },
-      { isActive: false },
-    );
-
-    let userRoutine = await this.userRoutineRepository.findOne({
-      where: {
-        user: { id: userId },
-        routine: { id: routineId },
-      },
-    });
-
-    if (!userRoutine) {
-      userRoutine = this.userRoutineRepository.create({
-        user,
-        routine,
-        isActive: true,
-      });
-    } else {
-      userRoutine.isActive = true;
-    }
-
-    return this.userRoutineRepository.save(userRoutine);
-  }
-  async getActiveRoutine(userId: number) {
+  // ✅ OBTENER RUTINA ACTUAL DEL USUARIO
+  async getUserRoutine(userId: number) {
     const userRoutine = await this.userRoutineRepository.findOne({
-      where: {
-        user: { id: userId },
-        isActive: true,
-      },
+      where: { user: { id: userId }, completed: false },
       relations: [
         'routine',
-        'routine.blocks',
-        'routine.blocks.exercises',
-        'routine.blocks.exercises.exercise',
+        'routine.days',
+        'routine.days.blocks',
+        'routine.days.blocks.exercises',
+        'routine.days.blocks.exercises.exercise',
       ],
     });
 
     if (!userRoutine) {
-      throw new NotFoundException('No active routine');
+      throw new NotFoundException('User has no active routine');
     }
 
-    return this.groupByDay(userRoutine.routine);
+    return userRoutine;
   }
+
+  // ✅ OBTENER SOLO EL DÍA ACTUAL
   async getTodayRoutine(userId: number) {
-    const userRoutine = await this.userRoutineRepository.findOne({
-      where: {
-        user: { id: userId },
-        isActive: true,
-      },
-      relations: [
-        'routine',
-        'routine.blocks',
-        'routine.blocks.exercises',
-        'routine.blocks.exercises.exercise',
-      ],
-    });
+    const userRoutine = await this.getUserRoutine(userId);
 
-    if (!userRoutine) {
-      throw new NotFoundException('No active routine');
-    }
-
-    const routine = userRoutine.routine;
     const currentDay = userRoutine.currentDay;
 
-    const blocksToday = routine.blocks
-      .filter((b) => b.day === currentDay)
-      .sort((a, b) => a.order - b.order)
-      .map((block) => ({
-        id: block.id,
-        order: block.order,
-        exercises: [...block.exercises].sort((a, b) => a.order - b.order),
-      }));
-
-    return {
-      routineId: routine.id,
-      routineName: routine.name,
-      today: currentDay,
-      blocks: blocksToday,
-    };
-  }
-  async completeDay(userId: number) {
-    const userRoutine = await this.userRoutineRepository.findOne({
-      where: {
-        user: { id: userId },
-        isActive: true,
-      },
-      relations: ['routine', 'routine.blocks'],
-    });
-
-    if (!userRoutine) {
-      throw new NotFoundException('No active routine');
-    }
-
-    // 🔥 VALIDACIÓN (ANTES de avanzar)
-    if (userRoutine.lastCompletedAt) {
-      const last = new Date(userRoutine.lastCompletedAt);
-      const today = new Date();
-
-      last.setHours(0, 0, 0, 0);
-      today.setHours(0, 0, 0, 0);
-
-      if (last.getTime() === today.getTime()) {
-        throw new BadRequestException('La rutina de hoy ya esta completa.');
-      }
-    }
-
-    const routine = userRoutine.routine;
-
-    const uniqueDays = [...new Set(routine.blocks.map((b) => b.day))].sort(
-      (a, b) => a - b,
+    const day = userRoutine.routine.days.find(
+      (d) => d.dayNumber === currentDay,
     );
 
-    if (uniqueDays.length === 0) {
-      throw new BadRequestException('La rutina no tiene días definidos');
+    if (!day) {
+      throw new NotFoundException('Day not found in routine');
     }
-    const totalDays = uniqueDays.length;
 
-    const currentIndex = uniqueDays.indexOf(userRoutine.currentDay);
-    const nextIndex = (currentIndex + 1) % totalDays;
-    const nextDay = uniqueDays[nextIndex];
+    return {
+      routineId: userRoutine.routine.id,
+      routineName: userRoutine.routine.name,
+      day: currentDay,
+      blocks: day.blocks,
+    };
+  }
 
-    userRoutine.currentDay = nextDay;
-    userRoutine.lastCompletedAt = new Date();
+  // ✅ COMPLETAR DÍA (avanza automáticamente)
+  async completeDay(userId: number) {
+    const userRoutine = await this.getUserRoutine(userId);
+
+    const days = userRoutine.routine.days
+      .map((d) => d.dayNumber)
+      .sort((a, b) => a - b);
+
+    const currentIndex = days.indexOf(userRoutine.currentDay);
+
+    if (currentIndex === -1) {
+      throw new BadRequestException('Current day invalid');
+    }
+
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex >= days.length) {
+      userRoutine.completed = true;
+    } else {
+      userRoutine.currentDay = days[nextIndex];
+    }
 
     return this.userRoutineRepository.save(userRoutine);
   }
-  private groupByDay(routine: Routine) {
-    type DayGroup = {
-      day: number;
-      blocks: {
-        id: number;
-        order: number;
-        exercises: RoutineBlockExercise[];
-      }[];
-    };
 
-    const daysMap = new Map<number, DayGroup>();
+  async getUserProgress(userId: number) {
+    const ur = await this.userRoutineRepository.findOne({
+      where: { user: { id: userId }, completed: false },
+      relations: ['routine', 'routine.days'],
+    });
 
-    for (const block of routine.blocks) {
-      if (!daysMap.has(block.day)) {
-        daysMap.set(block.day, {
-          day: block.day,
-          blocks: [],
-        });
-      }
-
-      const sortedExercises = [...block.exercises].sort(
-        (a, b) => a.order - b.order,
-      );
-
-      daysMap.get(block.day)!.blocks.push({
-        id: block.id,
-        order: block.order,
-        exercises: sortedExercises,
-      });
+    if (!ur) {
+      return 0;
     }
 
-    const days = Array.from(daysMap.values()).map((day) => ({
-      ...day,
-      blocks: day.blocks.sort((a, b) => a.order - b.order),
-    }));
+    const daysPerWeek = ur.routine.days.length;
+    const totalDays = daysPerWeek * 4;
 
-    days.sort((a, b) => a.day - b.day);
+    if (totalDays === 0) return 0;
 
-    return {
-      id: routine.id,
-      name: routine.name,
-      description: routine.description,
-      trainer: routine.trainer,
-      days,
-    };
+    return Math.round((ur.currentDay / totalDays) * 100);
   }
 }

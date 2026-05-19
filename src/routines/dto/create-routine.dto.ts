@@ -1,26 +1,16 @@
 import { Type } from 'class-transformer';
-import {
-  IsString,
-  IsOptional,
-  ValidateNested,
-  ArrayMinSize,
-  IsInt,
-} from 'class-validator';
-import { CreateRoutineBlockDto } from './create-routine-block.dto';
+import { IsString, ValidateNested, ArrayMinSize, IsInt } from 'class-validator';
+import { CreateRoutineDayDto } from './create-routine-day.dto';
 
 export class CreateRoutineDto {
   @IsString()
   name!: string;
 
-  @IsOptional()
-  @IsString()
-  description?: string;
-
   @IsInt()
   trainerId!: number;
 
   @ValidateNested({ each: true })
-  @Type(() => CreateRoutineBlockDto)
+  @Type((): new () => CreateRoutineDayDto => CreateRoutineDayDto)
   @ArrayMinSize(1)
-  blocks!: CreateRoutineBlockDto[];
+  days!: CreateRoutineDayDto[];
 }
