@@ -12,6 +12,33 @@ import { AuthUser } from '../auth/interfaces/auth-user.interface';
 export class RoutinesController {
   constructor(private readonly routinesService: RoutinesService) {}
 
+  // 🧍 USUARIO → VER SU RUTINA ACTUAL
+  @Get('me')
+  @Roles('user', 'trainer')
+  getMyRoutine(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getUserRoutine(user.id);
+  }
+
+  // 🧍 USUARIO → VER SOLO EL DÍA ACTUAL
+  @Get('me/today')
+  @Roles('user', 'trainer')
+  getToday(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getTodayRoutine(user.id);
+  }
+
+  // 🧍 USUARIO → COMPLETAR DÍA
+  @Post('me/complete-day')
+  @Roles('user', 'trainer')
+  completeDay(@CurrentUser() user: AuthUser) {
+    return this.routinesService.completeDay(user.id);
+  }
+
+  @Get('me/progress')
+  @Roles('user', 'trainer')
+  getProgress(@CurrentUser() user: AuthUser) {
+    return this.routinesService.getUserProgress(user.id);
+  }
+
   // 👨‍🏫 CREAR RUTINA
   @Post()
   @Roles('trainer')
@@ -41,32 +68,5 @@ export class RoutinesController {
     @Param('routineId') routineId: string,
   ) {
     return this.routinesService.assignRoutineToUser(+userId, +routineId);
-  }
-
-  // 🧍 USUARIO → VER SU RUTINA ACTUAL
-  @Get('me')
-  @Roles('user', 'trainer')
-  getMyRoutine(@CurrentUser() user: AuthUser) {
-    return this.routinesService.getUserRoutine(user.id);
-  }
-
-  // 🧍 USUARIO → VER SOLO EL DÍA ACTUAL
-  @Get('me/today')
-  @Roles('user', 'trainer')
-  getToday(@CurrentUser() user: AuthUser) {
-    return this.routinesService.getTodayRoutine(user.id);
-  }
-
-  // 🧍 USUARIO → COMPLETAR DÍA
-  @Post('me/complete-day')
-  @Roles('user', 'trainer')
-  completeDay(@CurrentUser() user: AuthUser) {
-    return this.routinesService.completeDay(user.id);
-  }
-
-  @Get('me/progress')
-  @Roles('user', 'trainer')
-  getProgress(@CurrentUser() user: AuthUser) {
-    return this.routinesService.getUserProgress(user.id);
   }
 }
