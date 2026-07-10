@@ -65,15 +65,17 @@ export class NutritionService {
   async publish(id: string) {
     const nutrition = await this.findOne(id);
 
-    // Despublicar todas las recetas
-    await this.nutritionRepository.update(
-      {},
-      {
-        published: false,
+    const published = await this.nutritionRepository.findOne({
+      where: {
+        published: true,
       },
-    );
+    });
 
-    // Publicar la seleccionada
+    if (published) {
+      published.published = false;
+      await this.nutritionRepository.save(published);
+    }
+
     nutrition.published = true;
 
     return await this.nutritionRepository.save(nutrition);
