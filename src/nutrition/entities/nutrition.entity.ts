@@ -23,9 +23,6 @@ export class Nutrition {
   @Column({ default: false })
   published!: boolean;
 
-  @Column({ default: true })
-  active!: boolean;
-
   @CreateDateColumn()
   createdAt!: Date;
 
