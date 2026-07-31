@@ -31,7 +31,6 @@ export class NutritionService {
     const nutrition = await this.nutritionRepository.findOne({
       where: {
         published: true,
-        active: true,
       },
     });
 
