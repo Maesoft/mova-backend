@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsString, ValidateNested, ArrayMinSize, IsInt } from 'class-validator';
+import {
+  IsString,
+  ValidateNested,
+  ArrayMinSize,
+  IsInt,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import { CreateRoutineDayDto } from './create-routine-day.dto';
 
 export class CreateRoutineDto {
@@ -8,6 +15,10 @@ export class CreateRoutineDto {
 
   @IsInt()
   trainerId!: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isChallenger?: boolean;
 
   @ValidateNested({ each: true })
   @Type((): new () => CreateRoutineDayDto => CreateRoutineDayDto)

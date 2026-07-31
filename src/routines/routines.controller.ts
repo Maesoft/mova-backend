@@ -49,8 +49,14 @@ export class RoutinesController {
   // 👨‍🏫 LISTAR TODAS LAS RUTINAS
   @Get()
   @Roles('trainer')
-  findAll() {
-    return this.routinesService.findAll();
+  findAllRoutines() {
+    return this.routinesService.findAllRoutines();
+  }
+  // 👨‍🏫 LISTAR TODOS LOS CHALLENGERS
+  @Get('challengers')
+  @Roles('trainer')
+  findAllChallengers() {
+    return this.routinesService.findAllChallengers();
   }
 
   // 👨‍🏫 OBTENER UNA RUTINA

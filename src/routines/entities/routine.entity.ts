@@ -26,4 +26,7 @@ export class Routine {
     eager: true,
   })
   days!: RoutineDay[];
+
+  @Column({ default: false })
+  isChallenger!: boolean;
 }

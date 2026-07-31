@@ -37,6 +37,7 @@ export class RoutinesService {
     const routine = this.routineRepository.create({
       name: dto.name,
       trainer,
+      isChallenger: dto.isChallenger ?? false,
       days: (dto.days || []).map((day) => ({
         dayNumber: day.dayNumber,
         blocks: (day.blocks || []).map((block) => ({
@@ -94,6 +95,58 @@ export class RoutinesService {
     if (!routine) throw new NotFoundException('Routine not found');
 
     return routine;
+  }
+
+  async findAllRoutines() {
+    return this.routineRepository.find({
+      where: {
+        isChallenger: false,
+      },
+      relations: [
+        'trainer',
+        'days',
+        'days.blocks',
+        'days.blocks.exercises',
+        'days.blocks.exercises.exercise',
+      ],
+      order: {
+        days: {
+          dayNumber: 'ASC',
+          blocks: {
+            order: 'ASC',
+            exercises: {
+              order: 'ASC',
+            },
+          },
+        },
+      },
+    });
+  }
+
+  async findAllChallengers() {
+    return this.routineRepository.find({
+      where: {
+        isChallenger: true,
+      },
+      relations: [
+        'trainer',
+        'days',
+        'days.blocks',
+        'days.blocks.exercises',
+        'days.blocks.exercises.exercise',
+      ],
+      order: {
+        days: {
+          dayNumber: 'ASC',
+          blocks: {
+            order: 'ASC',
+            exercises: {
+              order: 'ASC',
+            },
+          },
+        },
+      },
+    });
   }
 
   // ✅ ASIGNAR RUTINA
